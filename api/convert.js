@@ -1,14 +1,38 @@
+const multer = require("multer");
+const archiver = require("archiver");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+const upload = multer({ dest: os.tmpdir() });
+
+function runMiddleware(req, res, fn) {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result) => {
+      if (result instanceof Error) return reject(result);
+      return resolve(result);
+    });
+  });
+}
+
 module.exports = async function handler(req, res) {
-  // Add CORS headers
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // 🔹 CORS headers
+  res.setHeader("Access-Control-Allow-Origin", "*"); // allow any domain
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Handle preflight requests
+  // 🔹 Handle preflight OPTIONS requests
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
+  // Only allow POST
   if (req.method !== "POST") {
     return res.status(405).send("Method not allowed");
   }
@@ -57,7 +81,6 @@ module.exports = async function handler(req, res) {
       res.setHeader("Content-Type", "application/octet-stream");
       res.status(200).send(fileBuffer);
     });
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
